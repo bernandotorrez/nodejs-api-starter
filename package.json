@@ -14,7 +14,8 @@
     "dev-pm2-single-thread": "export NODE_ENV=development && export DEBUG=node-api:* && pm2 start ./bin/www --name node-api-centos",
     "dev-pm2-full-core": "export NODE_ENV=development && export DEBUG=node-api:* && pm2 start ./bin/www -i max --name node-api-centos",
     "dev-pm2-full-core-win": "set NODE_ENV=development && set DEBUG=node-api:* && pm2 start ./bin/www -i max --name node-api-win",
-    "prod-pm2-full-core-win": "set NODE_ENV=production && set DEBUG=node-api:* && pm2 start ./bin/www -i 2 --name node-api-win"
+    "prod-pm2-full-core-win": "set NODE_ENV=production && set DEBUG=node-api:* && pm2 start ./bin/www -i 2 --name node-api-win",
+    "linux": "export NODE_ENV=production && export DEBUG=node-api-node:* && nodemon ./bin/www"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",

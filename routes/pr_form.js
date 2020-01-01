@@ -5,6 +5,7 @@ const connection = require('../config/database_globalwebapp');
 
 // Panggil Model
 const TblMasterPP = require('../models/tbl_master_pp');
+const TblUser = require('../models/tbl_user');
 
 // Panggil global function
 const global_function = require('../config/function');
