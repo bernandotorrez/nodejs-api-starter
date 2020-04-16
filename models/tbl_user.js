@@ -1,5 +1,5 @@
 const Sequelize = require('sequelize');
-const connection = require('../config/database_globalwebapp');
+const connection = require('../config/database');
 
 
   const tbl_user = connection.define('tbl_user', {

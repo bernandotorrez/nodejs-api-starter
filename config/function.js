@@ -100,6 +100,8 @@ check_date = (value) => {
 
     if(moment(value, 'DD-MM-YYYY', true).isValid() || moment(value, 'D-MM-YYYY', true).isValid()) {
         var newdate = value.split("-").reverse().join("-");
+    } else if(moment(value, 'DD/MM/YYYY', true).isValid() || moment(value, 'D/MM/YYYY', true).isValid()) {
+        var newdate = value.split("/").reverse().join("-");
     } else {
         var newdate = value;
     }

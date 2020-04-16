@@ -6,7 +6,7 @@ var config = {
     user: process.env.USERNAME_DB,
     password: process.env.PASSWORD_DB,
     server: process.env.HOST_DB,
-    database: process.env.DATABASE_WEBAPP
+    database: process.env.DATABASE
   };
 
 const connection = new Sequelize(config.database, config.user, config.password, {

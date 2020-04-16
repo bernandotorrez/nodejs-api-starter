@@ -8,10 +8,11 @@ var winston = require('winston');
 var global_function = require('./config/function');
 var bearerToken = require('express-bearer-token');
 var appRoot = require('app-root-path');
+var cors = require('cors')
 
 // setiap membuat file router baru, silahkan panggil disini
+var carRouter = require('./routes/car');
 var loginRouter = require('./routes/login');
-var prFormRouter = require('./routes/pr_form');
 
 var app = express();
 
@@ -21,6 +22,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(bearerToken());
 app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(cors())
+//app.options('*', cors())
 
 // app.use(function(req, res, next) {
 //     res.header("Access-Control-Allow-Origin", "*");
@@ -35,8 +39,8 @@ if(process.env.NODE_ENV=='production'){
 }
 
 // setiap ada penambahan Router, inisialisasi index nya disini
+app.use('/car', carRouter);
 app.use('/login', loginRouter);
-app.use('/PRForm', prFormRouter);
   
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

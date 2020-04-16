@@ -9,13 +9,13 @@
     "stop": "pm2 stop ./bin/www",
     "monit": "pm2 monit www",
     "dev": "set NODE_ENV=development && set DEBUG=node-api:* && pm2 start ./bin/www --name node-api-dev",
+    "dev-centos": "export NODE_ENV=development && export DEBUG=node-api-node:* && nodemon ./bin/www",
     "prod-centos": "export NODE_ENV=production && set DEBUG=node-api:* && pm2 start ./bin/www -i max --name node-api-centos-prod",
     "dev-debug": "set NODE_ENV=development && set DEBUG=* && nodemon ./bin/www ",
     "dev-pm2-single-thread": "export NODE_ENV=development && export DEBUG=node-api:* && pm2 start ./bin/www --name node-api-centos",
     "dev-pm2-full-core": "export NODE_ENV=development && export DEBUG=node-api:* && pm2 start ./bin/www -i max --name node-api-centos",
     "dev-pm2-full-core-win": "set NODE_ENV=development && set DEBUG=node-api:* && pm2 start ./bin/www -i max --name node-api-win",
-    "prod-pm2-full-core-win": "set NODE_ENV=production && set DEBUG=node-api:* && pm2 start ./bin/www -i 2 --name node-api-win",
-    "linux": "export NODE_ENV=production && export DEBUG=node-api-node:* && nodemon ./bin/www"
+    "prod-pm2-full-core-win": "set NODE_ENV=production && set DEBUG=node-api:* && pm2 start ./bin/www -i 2 --name node-api-win"
   },
   "dependencies": {
     "app-root-path": "^3.0.0",
@@ -29,8 +29,10 @@
     "express-async-errors": "^3.1.1",
     "express-bearer-token": "^2.4.0",
     "express-winston": "^4.0.1",
+    "got": "^10.7.0",
     "helmet": "^3.21.2",
     "http-errors": "^1.7.3",
+    "local-ip": "^2.0.0",
     "md5": "^2.2.1",
     "moment": "^2.24.0",
     "morgan": "~1.9.1",
