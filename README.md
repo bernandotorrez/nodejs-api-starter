@@ -3,11 +3,12 @@ How to USE :
 1. Install Node JS in your Computer
 2. Clone this Repository
 3. open DB folder then import to your local database
-4. Open CMD then go to the Cloned Folder
-5. Open Node JS CMD :   1. npm install -> enter
+4. Setting your DB Config in .env
+5. Open CMD then go to the Cloned Folder
+6. Open Node JS CMD :   1. npm install -> enter
                         2. npm install -g express express-generator artillery pm2 -> enter
                         3. npm start -> enter
-6. Open browser -> localhost:3001
+7. Open browser -> localhost:3001
 
 Note jika sudah running :
 
