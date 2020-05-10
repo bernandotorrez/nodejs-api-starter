@@ -6,20 +6,37 @@
 
 var app = require('../app');
 var debug = require('debug')('nodejs:server');
-var http = require('http');
+var appRoot = require('app-root-path');
+var key;
+var cert;
+var fs = require('fs');
+if(!fs.existsSync(`${appRoot}/bin/key.pem`)) {
+  console.log("Key File not found");
+} else {
+  key = fs.readFileSync(`${appRoot}/bin/key.pem`);
+}
+
+if(!fs.existsSync(`${appRoot}/bin/cert.pem`)) {
+  console.log("Cert File not found");
+} else {
+  cert = fs.readFileSync(`${appRoot}/bin/cert.pem`);
+}
+
+
+var https = require('https');
 
 /**
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || '3001');
 app.set('port', port);
 
 /**
  * Create HTTP server.
  */
 
-var server = http.createServer(app);
+var server = https.createServer({key: key, cert: cert }, app);
 
 /**
  * Listen on provided port, on all network interfaces.

@@ -1,15 +1,16 @@
-var express = require('express');
+let express = require('express');
 require('express-async-errors');
-var router = express.Router();
+let router = express.Router();
 const connection = require('../config/database');
 const TblUserNewModel = require('../models/tbl_user_new');
+const Joi = require('@hapi/joi');
 
 // panggil fungsi global function
 const global_function = require('../config/function');
 
 router.get('/get', async(req, res, next) => {
-  var {id} = req.query;
-  var data = await TblUserNewModel.findOne(
+  let {id} = req.query;
+  let data = await TblUserNewModel.findOne(
     {
       where: { id: id, status: ['1', '2'] },
       attributes: { exclude: ["password"] },
@@ -25,30 +26,61 @@ router.get('/get', async(req, res, next) => {
 
 router.post('/doLogin', async(req, res, next) => {
 
-  var {email, password} = req.body;
+  let {email, password} = req.body;
+
+  // Input API Validation
+  const schema = Joi.object({
+    email: Joi.string().min(6).required(),
+    password: Joi.string().min(8).required()
+  })
+
+  const result = schema.validate(req.body);
+
+  if(result.error) {
+    res.status(400).send({'httpStatus': 400, 'message': 'error_validation', 'data': result.error.details[0].message});
+    return false;
+  }
+  // Input API Validation
   
-  var data = await TblUserNewModel.findAll({
+  let data = await TblUserNewModel.findOne({
     where: {
       email: email,
       password: password
     }
   })
 
-  var total = data.length
-
-  if(total > 0) {
-    res.status(200).send({'httpStatus': 200, 'message': 'success', 'data': data[0]});
+  if(data) {
+    res.status(200).send({'httpStatus': 200, 'message': 'success', 'data': data});
   } else {  
-    res.status(200).send({'httpStatus': 404, 'message': 'username or password is wrong', 'data': null});
+    res.status(200).send({'httpStatus': 200, 'message': 'username or password is wrong', 'data': null});
   }
 
 });
 
 router.post('/register', async(req, res, next) => {
 
-  var {email, password, gender, phone, date_birth, name, address} = req.body;
+  let {email, password, gender, phone, date_birth, name, address} = req.body;
 
-  var check_validate = await TblUserNewModel.findAll({
+  // Input API Validation
+  const schema = Joi.object({
+    email: Joi.string().min(6).max(150).required(),
+    password: Joi.string().min(8).max(50).required(),
+    gender: Joi.string().min(1).max(1).pattern(new RegExp('[FM]')).required(),
+    phone: Joi.string().min(10).max(14).pattern(new RegExp('^[0-9]+$')).required(),
+    date_birth: Joi.date().required(),
+    name: Joi.string().min(3).max(100).required(),
+    address: Joi.string().min(3).max(150).required()
+  })
+
+  const result = schema.validate(req.body);
+
+  if(result.error) {
+    res.status(400).send({'httpStatus': 400, 'message': 'error_validation', 'data': result.error.details[0].message});
+    return false;
+  }
+  // Input API Validation
+
+  let check_validate = await TblUserNewModel.findAll({
     where: {
       email: email
     }
@@ -57,7 +89,7 @@ router.post('/register', async(req, res, next) => {
   if(check_validate.length > 0) {
     res.status(200).send({'httpStatus': 200, 'message': 'registered', 'data': 'registered'});
   } else {
-    var data = await TblUserNewModel.create({
+    let data = await TblUserNewModel.create({
       email: email,
       password: password,
       gender: gender,
@@ -79,9 +111,9 @@ router.post('/register', async(req, res, next) => {
 
 router.put('/doLogout', async(req, res, next) => {
 
-  var {id, login_terakhir, waktu} = req.body;
+  let {id, login_terakhir, waktu} = req.body;
 
-  var update = await TblUserModel.update({
+  let update = await TblUserModel.update({
     waktu: waktu,
     login_terakhir: login_terakhir
   }, {
@@ -102,9 +134,9 @@ router.put('/doLogout', async(req, res, next) => {
 
 router.put('/updateSuccessLogin', async(req, res, next) => {
 
-  var {username, waktu, ip} = req.body;
+  let {username, waktu, ip} = req.body;
 
-  var update = await TblUserNewModel.update({
+  let update = await TblUserNewModel.update({
     waktu: waktu,
     ip: ip
   }, {
