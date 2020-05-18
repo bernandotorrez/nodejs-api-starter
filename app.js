@@ -1,21 +1,24 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var createError = require('http-errors');
-var helmet = require('helmet');
-var winston = require('winston');
-var global_function = require('./config/function');
-var bearerToken = require('express-bearer-token');
-var appRoot = require('app-root-path');
-var cors = require('cors')
+const express = require('express');
+const path = require('path');
+const cookieParser = require('cookie-parser');
+const logger = require('morgan');
+const createError = require('http-errors');
+const helmet = require('helmet');
+const winston = require('winston');
+const global_function = require('./config/function');
+const bearerToken = require('express-bearer-token');
+const appRoot = require('app-root-path');
+const cors = require('cors')
+const compression = require('compression');
+const jwt = require('jsonwebtoken');
 
 // setiap membuat file router baru, silahkan panggil disini
-var carRouter = require('./routes/car');
-var loginRouter = require('./routes/login');
+const carRouter = require('./routes/car');
+const loginRouter = require('./routes/login');
 
-var app = express();
+const app = express();
 
+app.use(compression())
 app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -24,18 +27,15 @@ app.use(bearerToken());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(cors())
-//app.options('*', cors())
-
-// app.use(function(req, res, next) {
-//     res.header("Access-Control-Allow-Origin", "*");
-//     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//     next();
-// });
 
 // wajib saat naik ke production
-if(process.env.NODE_ENV=='production'){
+if(process.env.NODE_ENV.trim()=='production'){
     app.use(helmet());
+}
+
+if(!process.env.JWT_PRIVATE_KEY) {
+  console.error(`FATAL ERROR : jwtPrivateKey not set`);
+  process.exit(1);
 }
 
 // setiap ada penambahan Router, inisialisasi index nya disini
@@ -48,17 +48,16 @@ app.use(function(req, res, next) {
   });
 
   // error handler
-  
   process.on('uncaughtException', (ex) => {
-    var log_date = global_function.time_date();
-    var file_name = `uncaughtException ${log_date}.log`;
-    var log_location = `${appRoot}/logs/${file_name}`;
+    const log_date = global_function.time_date();
+    const file_name = `uncaughtException ${log_date}.log`;
+    const log_location = `${appRoot}/logs/${file_name}`;
 
     const logFile = winston.createLogger({
      
       transports: [
    
-        new winston.transports.File({ filename: log_location, level: 'error' })
+        new winston.transports.File({ filename: log_location, level: 'error', colorize: true, prettyPrint: true })
       ]
     });
 
@@ -72,15 +71,15 @@ app.use(function(req, res, next) {
   })
 
   process.on('unhandledRejection', (ex) => {
-    var log_date = global_function.time_date();
-    var file_name = `unhandledRejection ${log_date}.log`;
-    var log_location = `${appRoot}/logs/${file_name}`;
+    const log_date = global_function.time_date();
+    const file_name = `unhandledRejection ${log_date}.log`;
+    const log_location = `${appRoot}/logs/${file_name}`;
 
     const logFile = winston.createLogger({
      
       transports: [
    
-        new winston.transports.File({ filename: log_location, level: 'error' })
+        new winston.transports.File({ filename: log_location, level: 'error', colorize: true, prettyPrint: true })
       ]
     });
 
@@ -98,17 +97,19 @@ app.use(function(err, req, res, next) {
     res.locals.message = err.message;
     res.locals.error = req.app.get('env').trim() == 'development' ? err : {};
 
-    var log_date = global_function.time_date();
-    var file_name = `error ${log_date}.log`;
-    var log_location = `${appRoot}/logs/${file_name}`;
+    const log_date = global_function.time_date();
+    const file_name = `error ${log_date}.log`;
+    const log_location = `${appRoot}/logs/${file_name}`;
 
     const logFile = winston.createLogger({
      
       transports: [
    
-        new winston.transports.File({ filename: log_location, level: 'error' })
+        new winston.transports.File({ filename: log_location, level: 'error', colorize: true, prettyPrint: true })
       ]
     });
+
+    const decoded = jwt.verify(req.header('X-Auth-Token'), process.env.JWT_PRIVATE_KEY);
 
     logFile.log({
       level: 'error',
@@ -117,10 +118,9 @@ app.use(function(err, req, res, next) {
       ip: `${req.ip}`,
       url: `${req.originalUrl}`,
       method: `${req.method}`,
-      api_token: `${req.token}`,
+      email: `${decoded._email}`,
       timestamp : global_function.log_time()
     });
-
     // render the error page
     res.status(err.status || 500).send({'httpStatus': err.status || 500, 'message': err.message, 'data': null});
   });

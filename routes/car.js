@@ -2,42 +2,30 @@ var express = require('express');
 require('express-async-errors');
 var router = express.Router();
 const connection = require('../config/database');
-const TblTypePorsche = require('../models/tbl_type_porsche');
-const TblModelPorsche = require('../models/tbl_model_porsche');
-const TblUserNew = require('../models/tbl_user_new');
-const {Op} = require('sequelize');
 
-// Panggil global function
+// Panggil Model
+const TblTypePorsche = require('../models/tbl_type_porsche');
+const {TblModelPorsche, validateModelSearch} = require('../models/tbl_model_porsche');
+const {ViewTypeModelPorsche, validateTypeModelSearch, validateTypeModelGetId} = require('../models/view_type_model');
+const {ViewTypeColour, validateTypeColourId, validateTypeColourIdColour} = require('../models/view_type_colour');
+const {ViewBannerPorsche} = require('../models/view_banner_porsche');
+
+const {Op} = require('sequelize');
 const global_function = require('../config/function');
 const got = require('got');
+const auth = require('../middleware/auth');
 
-// router.all('*', async (req, res, next) => {
-   
-//     var token = global_function.check_null(req.token)
-   
-//     var data = await TblUserNew.findAll({
-//         where: {
-//             api_token: token
-//         },
-//         attributes: ['email']
-//     })
+// auth_admin is middleware to check whether is admin or no, if admin, she / he can delete / update spesific data
+const auth_admin = require('../middleware/auth_admin');
 
-//     if (data.length == 0 || global_function.check_null(req.token) == '-') {
-//         res.status(401).send({
-//             'httpStatus': 401,
-//             'message': 'unauthorized access or token is invalid',
-//             'data': null,
-//             'total': data.length
-//         });
-//     } else {
-//         next();
-//     }
-
-// })
+router.all('*', auth, async (req, res, next) => {
+    //console.log(req.user._email)
+    next();
+})
 
 router.get('/all/model', async (req, res, next) => {
 
-    var data = await TblModelPorsche.findAll({
+    let data = await TblModelPorsche.findAll({
         where: {
             status_del: 1
         },
@@ -46,9 +34,9 @@ router.get('/all/model', async (req, res, next) => {
         ],
     })
 
-    var count = data.length;
+    let count = data.length;
 
-    if (data) {
+    if (count > 0) {
         res.status(200).send({
             'httpStatus': 200,
             'message': 'success',
@@ -67,8 +55,22 @@ router.get('/all/model', async (req, res, next) => {
 })
 
 router.get('/all/model/search', async (req, res, next) => {
-    var {q} = req.query;
-    var data = await TblModelPorsche.findAll({
+    let {q} = req.query;
+
+    // Input Validation
+    let validation = validateModelSearch(req.query);
+
+    if (validation.error) {
+        res.status(400).send({
+          'httpStatus': 400,
+          'message': 'error_validation',
+          'data': validation.error.details[0].message
+        });
+        return false;
+      }
+    // Input Validation
+
+    let data = await TblModelPorsche.findAll({
         where: {
             status_del: 1,
             desc_model: {
@@ -80,9 +82,9 @@ router.get('/all/model/search', async (req, res, next) => {
         ],
     })
 
-    var count = data.length;
+    let count = data.length;
 
-    if (data) {
+    if (count > 0) {
         res.status(200).send({
             'httpStatus': 200,
             'message': 'success',
@@ -101,22 +103,34 @@ router.get('/all/model/search', async (req, res, next) => {
 })
 
 router.get('/all/model/type', async (req, res, next) => {
-    var {id} = req.query;
+    let {id} = req.query;
 
-    var query = "SELECT *"
-            + " FROM view_type_model "
-            + " WHERE id_model = $id"
-            + " AND status_del = 1 "
-            + " ORDER BY desc_type ASC"
+    // Input Validation
+    let validation = validateTypeModelGetId(req.query);
 
-    var data = await connection.query(query, {
-        bind: { id: id },
-        type: connection.QueryTypes.SELECT
+    if (validation.error) {
+        res.status(400).send({
+          'httpStatus': 400,
+          'message': 'error_validation',
+          'data': validation.error.details[0].message
+        });
+        return false;
+      }
+    // Input Validation
+
+    let data = await ViewTypeModelPorsche.findAll({
+        where: {
+            status_del: 1,
+            id_model: id
+        },
+        order: [
+            ['desc_model', 'ASC'],
+        ],
     })
 
-    var count = data.length;
+    let count = data.length;
 
-    if (data) {
+    if (count > 0) {
         res.status(200).send({
             'httpStatus': 200,
             'message': 'success',
@@ -137,22 +151,33 @@ router.get('/all/model/type', async (req, res, next) => {
 router.get('/all/model/type/search', async (req, res, next) => {
     var {id, q} = req.query
 
-    var query = "SELECT *"
-            + " FROM view_type_model "
-            + " WHERE id_model = $id"
-            + " AND status_del = 1 "
-            + " AND desc_type LIKE $q"
-            + " ORDER BY desc_type ASC"
+    // Input Validation
+    let validation = validateTypeModelSearch(req.query);
 
-    var data = await connection.query(query, {
-        bind: {
-            id: id,
-            q: `%${q}%`
+    if (validation.error) {
+        res.status(400).send({
+          'httpStatus': 400,
+          'message': 'error_validation',
+          'data': validation.error.details[0].message
+        });
+        return false;
+      }
+    // Input Validation
+
+    let data = await ViewTypeModelPorsche.findAll({
+        where: {
+            id_model: id,
+            status_del: 1,
+            desc_type: {
+                [Op.like]: `%${q}%`
+            }
         },
-        type: connection.QueryTypes.SELECT
-    })
+        order: [
+            ['desc_model', 'ASC'],
+        ],
+    });
 
-    var count = data.length
+    let count = data.length;
 
     if (count > 0) {
         res.status(200).send({
@@ -174,18 +199,31 @@ router.get('/all/model/type/search', async (req, res, next) => {
 
 router.get('/all/type/colour', async (req, res, next) => {
     var {id} = req.query
-    var query = "SELECT id_type, id_colour, desc_type, desc_colour, desc_cat_colour, desc_model, price_type, position_colour"
-            + " FROM view_type_colour "
-            + " WHERE id_type = $id"
-            + " AND status_del = 1"
-            + " GROUP BY desc_colour"
 
-    var data = await connection.query(query, {
-        bind: { id: id },
-        type: connection.QueryTypes.SELECT
-    })
+    // Input Validation
+    let validation = validateTypeColourId(req.query);
 
-    var count = data.length
+    if (validation.error) {
+        res.status(400).send({
+          'httpStatus': 400,
+          'message': 'error_validation',
+          'data': validation.error.details[0].message
+        });
+        return false;
+      }
+    // Input Validation
+    
+    let data = await ViewTypeColour.findAll({
+        where: {
+            id_type: id,
+            status_del: 1
+        },
+        order: [
+            ['desc_colour', 'ASC']
+        ]
+    });
+
+    let count = data.length;
 
     if (count > 0) {
         res.status(200).send({
@@ -206,62 +244,64 @@ router.get('/all/type/colour', async (req, res, next) => {
 })
 
 router.get('/one/colour/detail', async (req, res, next) => {
-    var {id, colour} = req.query
-    var query = "SELECT id_type, price_type, desc_type, desc_colour, desc_cat_colour, desc_model "
-            + " FROM view_type_colour "
-            + " WHERE id_type = $id "
-            + " AND id_colour = $colour"
-            + " AND status_del = 1"
+    let {id, colour} = req.query
 
-    var data = await connection.query(query, {
-        bind: { 
-            id: id,
-            colour: colour
-        },
-        type: connection.QueryTypes.SELECT
+    // Input Validation
+    let validation = validateTypeColourIdColour(req.query);
+
+    if (validation.error) {
+        res.status(400).send({
+          'httpStatus': 400,
+          'message': 'error_validation',
+          'data': validation.error.details[0].message
+        });
+        return false;
+      }
+    // Input Validation
+
+    let data = await ViewTypeColour.findOne({
+        where: {
+            id_type: id,
+            id_colour: colour,
+            status_del: 1
+        }
     })
-
-    var count = data.length
-
-    if (count > 0) {
+    
+    if (data) {
         res.status(200).send({
             'httpStatus': 200,
             'message': 'success',
-            'total': count,
+            'total': 1,
             'data': data
         });
     } else {
         res.status(200).send({
             'httpStatus': 404,
             'message': 'no data',
-            'total': count,
+            'total': 0,
             'data': null
         });
     }
 
 })
 
-
-
 router.get('/list/car/colour/search', async (req, res, next) => {
-    var {id, q} = req.query
+    let {id, q} = req.query
 
-    var query = "SELECT id_type, desc_type, desc_colour, desc_cat_colour "
-    + " FROM view_type_colour "
-    + " WHERE status_del = 1 "
-    + " AND id_type = $id "
-    + " AND desc_colour LIKE $q"
-    + " GROUP BY desc_colour"
-
-    var data = await connection.query(query, {
-        bind: {
-            id: id,
-            q: `%${q}%`
+    let data = await ViewTypeColour.findAll({
+        where: {
+            id_type: id,
+            status_del: 1,
+            desc_colour: {
+                [Op.like]: `%${q}%`
+            }
         },
-        type: connection.QueryTypes.SELECT
+        order: [
+            ['desc_colour', 'ASC']
+        ]
     })
 
-    var count = data.length
+    let count = data.length
 
     if (count > 0) {
         res.status(200).send({
@@ -285,13 +325,9 @@ router.get('/list/car/colour/search', async (req, res, next) => {
 
 router.get('/banner/porsche', async (req, res, next) => {
 
-    var query = "SELECT * FROM view_banner_porsche"
-    
-    var data = await connection.query(query, {
-        type: connection.QueryTypes.SELECT
-    })
+    let data = await ViewBannerPorsche.findAll();
 
-    var count = data.length
+    let count = data.length
 
     if (count > 0) {
         res.status(200).send({
